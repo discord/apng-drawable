@@ -10,7 +10,7 @@ plugins {
     signing
 }
 
-group = "com.linecorp"
+group = "com.github.discord"
 version = libs.versions.apng.drawable.get()
 
 android {
@@ -111,7 +111,7 @@ afterEvaluate {
         publications {
             create<MavenPublication>("apngDrawable") {
                 from(components["release"])
-                groupId = "com.linecorp"
+                groupId = "com.github.discord"
                 artifactId = "apng"
                 version = libs.versions.apng.drawable.get()
                 pom {
