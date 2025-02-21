@@ -1,6 +1,8 @@
 jdk:
   - openjdk17
 before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y patch
   - cat libpng_version | xargs ./download_libpng_and_apply_apng_patch.sh
 install:
   - ./gradlew build publishToMavenLocal
