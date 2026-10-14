@@ -93,6 +93,7 @@ target_include_directories(
 
 # Keep the bundled codec private when the host app also links a different LZ4 version.
 target_compile_definitions(apng-drawable PRIVATE "LZ4LIB_VISIBILITY=__attribute__((visibility(\"hidden\")))")
+set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/lz4/lz4.c PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
 
 if (${CMAKE_BUILD_TYPE} MATCHES DEBUG)
     find_library(log-lib
