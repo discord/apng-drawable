@@ -61,6 +61,9 @@ internal class Apng(
 ) {
     private val bitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
+    // The frame in [bitmap]. Copying a frame decompresses it and makes the bitmap upload again.
+    private var drawnFrameIndex: Int = 0
+
     val byteCount: Int
         get() = bitmap.allocationByteCount
 
@@ -100,9 +103,12 @@ internal class Apng(
      * Draws specified frame to the [canvas].
      */
     fun drawWithIndex(frameIndex: Int, canvas: Canvas, src: Rect?, dst: Rect, paint: Paint) {
-        Trace.beginSection("Apng#draw")
-        ApngDecoderJni.draw(id, frameIndex, bitmap)
-        Trace.endSection()
+        if (frameIndex != drawnFrameIndex) {
+            Trace.beginSection("Apng#draw")
+            ApngDecoderJni.draw(id, frameIndex, bitmap)
+            Trace.endSection()
+            drawnFrameIndex = frameIndex
+        }
         canvas.drawBitmap(bitmap, src, dst, paint)
     }
 
