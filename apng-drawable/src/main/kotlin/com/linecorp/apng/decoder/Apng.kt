@@ -127,11 +127,11 @@ internal class Apng(
     companion object {
 
         @Throws(ApngException::class)
-        fun decode(stream: InputStream): Apng {
+        fun decode(stream: InputStream, compressFrames: Boolean = false): Apng {
             val result = DecodeResult()
             Trace.beginSection("Apng#decode")
             val id = try {
-                ApngDecoderJni.decode(stream, result)
+                ApngDecoderJni.decode(stream, result, compressFrames)
             } catch (e: Throwable) {
                 throw ApngException(e)
             } finally {

@@ -25,19 +25,27 @@ namespace apng_drawable {
 
 class ApngImage {
  public:
-  ApngImage(uint32_t width, uint32_t height, uint32_t frameCount, uint32_t loopCount);
+  ApngImage(uint32_t width, uint32_t height, uint32_t frameCount, uint32_t loopCount,
+            bool compressFrames = false);
   ApngImage() = delete;
   uint32_t getWidth() const { return mWidth; }
   uint32_t getHeight() const { return mHeight; }
   uint32_t getRepeatCount() const { return mLoopCount; }
   uint32_t getFrameCount() const { return mFrameCount; }
   uint32_t getFrameByteCount() const { return sizeof(uint32_t) * mWidth * mHeight; }
-  uint64_t getAllFrameByteCount() const { return getFrameByteCount() * mFrameCount; }
+  uint64_t getAllFrameByteCount() const {
+    return mFrameAllocationByteCount + mCompressionScratch.capacity() +
+        (mCompressedStorage ? mCompressedStorage->capacity() : 0);
+  }
+  void finishDecoding();
   std::shared_ptr<ApngFrame> getFrame(uint32_t index) const;
   void setFrame(uint32_t index, std::unique_ptr<ApngFrame> frame);
 
  private:
   std::unique_ptr<std::shared_ptr<ApngFrame>[]> mFrames;
+  uint64_t mFrameAllocationByteCount = 0;
+  std::shared_ptr<std::vector<char>> mCompressedStorage;
+  std::vector<char> mCompressionScratch;
   uint32_t mWidth;
   uint32_t mHeight;
   uint32_t mFrameCount;

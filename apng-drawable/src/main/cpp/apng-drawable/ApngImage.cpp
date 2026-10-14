@@ -22,12 +22,20 @@ ApngImage::ApngImage(
     uint32_t width,
     uint32_t height,
     uint32_t frameCount,
-    uint32_t loopCount
+    uint32_t loopCount,
+    bool compressFrames
 ) : mWidth(width),
     mHeight(height),
     mFrameCount(frameCount),
     mLoopCount(loopCount) {
   mFrames = std::make_unique<std::shared_ptr<ApngFrame>[]>(mFrameCount);
+  if (compressFrames) {
+    try {
+      mCompressedStorage = std::make_shared<std::vector<char>>();
+    } catch (const std::bad_alloc &) {
+      // Compression is optional; allocation failure preserves uncompressed decoding.
+    }
+  }
 }
 
 std::shared_ptr<ApngFrame> ApngImage::getFrame(const uint32_t index) const {
@@ -41,7 +49,27 @@ void ApngImage::setFrame(const uint32_t index, std::unique_ptr<ApngFrame> frame)
   if (index >= mFrameCount) {
     return;
   }
+  if (frame && mCompressedStorage) {
+    frame->compress(mCompressedStorage, mCompressionScratch);
+  }
+  if (mFrames[index]) {
+    mFrameAllocationByteCount -= mFrames[index]->getPixelAllocationByteCount();
+  }
+  if (frame) {
+    mFrameAllocationByteCount += frame->getPixelAllocationByteCount();
+  }
   mFrames[index] = std::move(frame);
+}
+
+void ApngImage::finishDecoding() {
+  std::vector<char>().swap(mCompressionScratch);
+  if (mCompressedStorage) {
+    try {
+      mCompressedStorage->shrink_to_fit();
+    } catch (const std::bad_alloc &) {
+      // The existing capacity remains valid and is included in memory accounting.
+    }
+  }
 }
 }
 

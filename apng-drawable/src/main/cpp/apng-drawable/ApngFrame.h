@@ -16,20 +16,31 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace apng_drawable {
 
 class ApngFrame {
  public:
-  ApngFrame(size_t frameByteCount, size_t duration);
+  ApngFrame(size_t pixelCount, size_t duration);
   ApngFrame() = delete;
 
   uint32_t *getRawPixels() const { return mPixels.get(); }
   size_t getDuration() const { return mDuration; }
+  // Shared compressed storage is counted once by ApngImage.
+  size_t getPixelAllocationByteCount() const { return mPixels ? mByteCount : 0; }
+  void compress(const std::shared_ptr<std::vector<char>> &storage, std::vector<char> &scratch);
+  bool copyPixels(void *destination, size_t capacity) const;
  private:
   std::unique_ptr<uint32_t[]> mPixels;
   size_t mDuration;
+  size_t mByteCount;
+  // Offsets survive growth of the shared buffer while subsequent frames decode.
+  std::shared_ptr<const std::vector<char>> mCompressedPixels;
+  size_t mCompressedOffset = 0;
+  int mCompressedSize = 0;
 
   // Do not copy this object.
   ApngFrame(const ApngFrame &ref);

@@ -73,6 +73,7 @@ set(apng_drawable_sources
         ${apng_drawable_source_dir}/ApngDecoder.cpp
         ${apng_drawable_source_dir}/ApngDecoderJni.cpp
         ${apng_drawable_source_dir}/ApngFrame.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/lz4/lz4.c
         ${apng_drawable_source_dir}/ApngImage.cpp
         ${apng_drawable_source_dir}/StreamSource.cpp
         )
@@ -87,7 +88,11 @@ target_include_directories(
         apng-drawable
         PUBLIC
         ${png_source_dir}
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lz4
 )
+
+# Keep the bundled codec private when the host app also links a different LZ4 version.
+target_compile_definitions(apng-drawable PRIVATE "LZ4LIB_VISIBILITY=__attribute__((visibility(\"hidden\")))")
 
 if (${CMAKE_BUILD_TYPE} MATCHES DEBUG)
     find_library(log-lib
