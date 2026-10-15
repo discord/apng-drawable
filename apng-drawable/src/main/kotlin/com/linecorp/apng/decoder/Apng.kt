@@ -109,8 +109,11 @@ internal class Apng(
     fun drawWithIndex(frameIndex: Int, canvas: Canvas, src: Rect?, dst: Rect, paint: Paint) {
         if (!reuseDrawnFrame || frameIndex != drawnFrameIndex) {
             Trace.beginSection("Apng#draw")
-            ApngDecoderJni.draw(id, frameIndex, bitmap)
-            Trace.endSection()
+            try {
+                ApngDecoderJni.draw(id, frameIndex, bitmap)
+            } finally {
+                Trace.endSection()
+            }
             drawnFrameIndex = frameIndex
         }
         canvas.drawBitmap(bitmap, src, dst, paint)
