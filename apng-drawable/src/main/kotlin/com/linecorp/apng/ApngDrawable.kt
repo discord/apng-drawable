@@ -598,6 +598,8 @@ class ApngDrawable @VisibleForTesting internal constructor(
          * @param height An optional drawable height; must be supplied together with [width].
          * @param compressFrames Reduce retained memory at the cost of extra decoding and drawing
          *                       CPU. Frames that do not save at least 25% remain uncompressed.
+         * @param reuseDrawnFrame Skip copying a frame that is already in the drawing bitmap when
+         *                        the drawable redraws without advancing to another frame.
          * @return Decoded drawable with unchanged pixels and frame durations.
          * @throws ApngException When decoding fails.
          * @throws IllegalArgumentException When the requested dimensions are invalid.
@@ -608,7 +610,8 @@ class ApngDrawable @VisibleForTesting internal constructor(
             stream: InputStream,
             @IntRange(from = 1, to = Int.MAX_VALUE.toLong()) width: Int? = null,
             @IntRange(from = 1, to = Int.MAX_VALUE.toLong()) height: Int? = null,
-            compressFrames: Boolean
+            compressFrames: Boolean,
+            reuseDrawnFrame: Boolean = false
         ): ApngDrawable {
             require(!((width == null) xor (height == null))) {
                 "Can not specify only one side of size. width = $width, height = $height"
@@ -624,7 +627,7 @@ class ApngDrawable @VisibleForTesting internal constructor(
             } else {
                 Bitmap.DENSITY_NONE
             }
-            val apng = Apng.decode(stream, compressFrames)
+            val apng = Apng.decode(stream, compressFrames, reuseDrawnFrame)
             return ApngDrawable(
                 ApngState(
                     apng,

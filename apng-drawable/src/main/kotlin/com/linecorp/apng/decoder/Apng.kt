@@ -57,7 +57,11 @@ internal class Apng(
      * The size of memory required for this image in the native layer.
      */
     @IntRange(from = 0, to = Int.MAX_VALUE.toLong())
-    val allFrameByteCount: Long
+    val allFrameByteCount: Long,
+    /**
+     * Whether [drawWithIndex] skips copying a frame that is already in the drawing bitmap.
+     */
+    private val reuseDrawnFrame: Boolean = false
 ) {
     private val bitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
@@ -103,7 +107,7 @@ internal class Apng(
      * Draws specified frame to the [canvas].
      */
     fun drawWithIndex(frameIndex: Int, canvas: Canvas, src: Rect?, dst: Rect, paint: Paint) {
-        if (frameIndex != drawnFrameIndex) {
+        if (!reuseDrawnFrame || frameIndex != drawnFrameIndex) {
             Trace.beginSection("Apng#draw")
             ApngDecoderJni.draw(id, frameIndex, bitmap)
             Trace.endSection()
@@ -133,7 +137,11 @@ internal class Apng(
     companion object {
 
         @Throws(ApngException::class)
-        fun decode(stream: InputStream, compressFrames: Boolean = false): Apng {
+        fun decode(
+            stream: InputStream,
+            compressFrames: Boolean = false,
+            reuseDrawnFrame: Boolean = false
+        ): Apng {
             val result = DecodeResult()
             Trace.beginSection("Apng#decode")
             val id = try {
@@ -152,7 +160,8 @@ internal class Apng(
                     result.frameCount,
                     result.frameDurations,
                     result.loopCount,
-                    result.allFrameByteCount
+                    result.allFrameByteCount,
+                    reuseDrawnFrame
                 )
             } catch (e: Throwable) {
                 throw ApngException(e)
@@ -188,7 +197,8 @@ internal class Apng(
                     result.frameCount,
                     result.frameDurations,
                     result.loopCount,
-                    result.allFrameByteCount
+                    result.allFrameByteCount,
+                    apng.reuseDrawnFrame
                 )
             } catch (e: Throwable) {
                 throw ApngException(e)
