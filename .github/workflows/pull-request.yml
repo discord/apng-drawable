@@ -32,6 +32,9 @@ jobs:
       - name: Run lint and unit test
         run: |
           cat libpng_version | xargs ./download_libpng_and_apply_apng_patch.sh
+          cmake -S apng-drawable/src/test/cpp -B build/frame-tests -DENABLE_SANITIZERS=ON
+          cmake --build build/frame-tests
+          ctest --test-dir build/frame-tests --output-on-failure
           ./gradlew --continue :apng-drawable:testDebugUnitTest :apng-drawable:lintDebug :apng-drawable:ktlintMainSourceSetCheck
 
       - name: Run Danger

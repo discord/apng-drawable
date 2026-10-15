@@ -26,7 +26,11 @@ internal object ApngDecoderJni {
     }
 
     @JvmStatic
-    external fun decode(inputStream: InputStream, result: Apng.DecodeResult): Int
+    external fun decode(
+        inputStream: InputStream,
+        result: Apng.DecodeResult,
+        compressFrames: Boolean
+    ): Int
 
     @JvmStatic
     external fun isApng(inputStream: InputStream): Boolean

@@ -57,9 +57,16 @@ internal class Apng(
      * The size of memory required for this image in the native layer.
      */
     @IntRange(from = 0, to = Int.MAX_VALUE.toLong())
-    val allFrameByteCount: Long
+    val allFrameByteCount: Long,
+    /**
+     * Whether [drawWithIndex] skips copying a frame that is already in the drawing bitmap.
+     */
+    private val reuseDrawnFrame: Boolean = false
 ) {
     private val bitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+    // The frame in [bitmap]. Copying a frame decompresses it and makes the bitmap upload again.
+    private var drawnFrameIndex: Int = 0
 
     val byteCount: Int
         get() = bitmap.allocationByteCount
@@ -100,9 +107,15 @@ internal class Apng(
      * Draws specified frame to the [canvas].
      */
     fun drawWithIndex(frameIndex: Int, canvas: Canvas, src: Rect?, dst: Rect, paint: Paint) {
-        Trace.beginSection("Apng#draw")
-        ApngDecoderJni.draw(id, frameIndex, bitmap)
-        Trace.endSection()
+        if (!reuseDrawnFrame || frameIndex != drawnFrameIndex) {
+            Trace.beginSection("Apng#draw")
+            try {
+                ApngDecoderJni.draw(id, frameIndex, bitmap)
+            } finally {
+                Trace.endSection()
+            }
+            drawnFrameIndex = frameIndex
+        }
         canvas.drawBitmap(bitmap, src, dst, paint)
     }
 
@@ -127,11 +140,15 @@ internal class Apng(
     companion object {
 
         @Throws(ApngException::class)
-        fun decode(stream: InputStream): Apng {
+        fun decode(
+            stream: InputStream,
+            compressFrames: Boolean = false,
+            reuseDrawnFrame: Boolean = false
+        ): Apng {
             val result = DecodeResult()
             Trace.beginSection("Apng#decode")
             val id = try {
-                ApngDecoderJni.decode(stream, result)
+                ApngDecoderJni.decode(stream, result, compressFrames)
             } catch (e: Throwable) {
                 throw ApngException(e)
             } finally {
@@ -146,7 +163,8 @@ internal class Apng(
                     result.frameCount,
                     result.frameDurations,
                     result.loopCount,
-                    result.allFrameByteCount
+                    result.allFrameByteCount,
+                    reuseDrawnFrame
                 )
             } catch (e: Throwable) {
                 throw ApngException(e)
@@ -182,7 +200,8 @@ internal class Apng(
                     result.frameCount,
                     result.frameDurations,
                     result.loopCount,
-                    result.allFrameByteCount
+                    result.allFrameByteCount,
+                    apng.reuseDrawnFrame
                 )
             } catch (e: Throwable) {
                 throw ApngException(e)

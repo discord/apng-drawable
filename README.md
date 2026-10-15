@@ -59,6 +59,31 @@ val drawable3 = ApngDrawable.decode(context.resources, R.raw.apng_image)
 
 You can find a more advanced way of using the library from the [example](https://github.com/line/apng-drawable/tree/master/sample-app).
 
+## Optional decoded-frame compression (Discord fork)
+
+```kotlin
+val drawable = stream.use { ApngDrawable.decode(it, compressFrames = true) }
+```
+
+This opt-in reduces retained native memory with LZ4 1.10.0 (BSD 2-Clause), at the
+cost of compression during loading and decompression into the existing drawing
+bitmap during playback. Pixels, compositing, and timing are unchanged. Frames
+smaller than 4 KiB, frames saving less than 25%, and compression allocation
+failures keep their original pixels. Compressed blocks share one buffer per
+image; drawable copies retain that buffer through the existing shared ownership.
+`allocationByteCount` includes the retained compressed capacity and drawing bitmap.
+Existing decode overloads continue to use uncompressed storage.
+
+```kotlin
+val drawable = stream.use {
+    ApngDrawable.decode(it, compressFrames = true, reuseDrawnFrame = true)
+}
+```
+
+`reuseDrawnFrame` skips copying a frame that is already in the drawing bitmap, so a
+redraw without a frame change avoids decompression and a bitmap upload. Drawable
+copies keep the option. Existing decode overloads copy the frame on every draw.
+
 ## How to build
 
 Note: This operation is necessary when building from code. It's not necessary if you are reading using `implementation` as shown in "[How to use]".
