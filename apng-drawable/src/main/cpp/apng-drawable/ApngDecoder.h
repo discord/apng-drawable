@@ -38,7 +38,8 @@ inline uint32_t div255Round(uint32_t a, uint32_t b) {
 
 class ApngDecoder {
  public:
-  static std::unique_ptr<ApngImage> decode(std::unique_ptr<StreamSource> source, int &status);
+  static std::unique_ptr<ApngImage> decode(std::unique_ptr<StreamSource> source, int &status,
+                                           bool compressFrames = false);
   static bool isApng(std::unique_ptr<StreamSource> source);
  private:
 };

@@ -95,7 +95,8 @@ Java_com_linecorp_apng_decoder_ApngDecoderJni_decode(
     JNIEnv *env,
     jclass thiz,
     jobject inputStream,
-    jobject result
+    jobject result,
+    jboolean compressFrames
 ) {
   LOGV("decode start");
 #ifdef BUILD_DEBUG
@@ -107,7 +108,8 @@ Java_com_linecorp_apng_decoder_ApngDecoderJni_decode(
 
   // decode
   std::unique_ptr<StreamSource> source(new StreamSource(env, inputStream));
-  std::shared_ptr<ApngImage> image = std::move(ApngDecoder::decode(std::move(source), resultCode));
+  std::shared_ptr<ApngImage> image = std::move(
+      ApngDecoder::decode(std::move(source), resultCode, compressFrames == JNI_TRUE));
 
   LOGV(" | decode result: %d", resultCode);
 
@@ -210,7 +212,9 @@ Java_com_linecorp_apng_decoder_ApngDecoderJni_draw(
     AndroidBitmap_unlockPixels(env, bitmap);
     return;
   }
-  memcpy(data, frame->getRawPixels(), image->getFrameByteCount());
+  if (!frame->copyPixels(data, image->getFrameByteCount())) {
+    memset(data, 0, image->getFrameByteCount());
+  }
   AndroidBitmap_unlockPixels(env, bitmap);
 }
 

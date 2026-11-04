@@ -115,7 +115,8 @@ inline void blendSource(
 
 std::unique_ptr<ApngImage> ApngDecoder::decode(
     std::unique_ptr<StreamSource> source,
-    int32_t &result
+    int32_t &result,
+    bool compressFrames
 ) {
   // Check signature
   LOGV(" | check signature");
@@ -225,7 +226,8 @@ std::unique_ptr<ApngImage> ApngDecoder::decode(
         width,
         height,
         static_cast<uint32_t>(frames),
-        static_cast<uint32_t>(plays)
+        static_cast<uint32_t>(plays),
+        compressFrames
     );
   } catch (const std::bad_alloc &) {
     LOGV(" | failed to allocate ApngImage due to std::bad_alloc");
@@ -333,6 +335,7 @@ std::unique_ptr<ApngImage> ApngDecoder::decode(
   LOGV(" | finish decode");
   png_read_end(png_ptr, info_ptr);
   png_destroy_read_struct(&png_ptr, &info_ptr, nullptr);
+  png->finishDecoding();
   result = SUCCESS;
   return std::move(png);
 }
