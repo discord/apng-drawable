@@ -42,7 +42,7 @@ class ApngImage {
   void setFrame(uint32_t index, std::unique_ptr<ApngFrame> frame);
 
  private:
-  std::unique_ptr<std::shared_ptr<ApngFrame>[]> mFrames;
+  std::vector<std::shared_ptr<ApngFrame>> mFrames;
   uint64_t mFrameAllocationByteCount = 0;
   std::shared_ptr<std::vector<char>> mCompressedStorage;
   std::vector<char> mCompressionScratch;

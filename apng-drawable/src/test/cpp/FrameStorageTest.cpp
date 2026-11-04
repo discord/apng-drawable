@@ -98,9 +98,22 @@ static void testDefaultRemainsUncompressed() {
   checkPixels(*image.getFrame(0), pixels);
 }
 
+static void testDeclaredFrameCountDoesNotPreallocate() {
+  ApngImage image(1, 1, UINT32_MAX, 0);
+  assert(image.getFrameCount() == UINT32_MAX);
+  assert(image.getFrame(0) == nullptr);
+  assert(image.getFrame(UINT32_MAX - 1) == nullptr);
+  const std::vector<uint32_t> pixels = {0xff00ff00};
+  image.setFrame(0, makeFrame(pixels));
+  checkPixels(*image.getFrame(0), pixels);
+  assert(image.getFrame(1) == nullptr);
+  image.finishDecoding();
+}
+
 int main() {
   testRoundTripsAndFallbacks();
   testImageStorageAndLifetime();
   testDefaultRemainsUncompressed();
+  testDeclaredFrameCountDoesNotPreallocate();
   std::cout << "Frame storage, bounds, accounting, and shared lifetime passed\n";
 }

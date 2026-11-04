@@ -28,7 +28,6 @@ ApngImage::ApngImage(
     mHeight(height),
     mFrameCount(frameCount),
     mLoopCount(loopCount) {
-  mFrames = std::make_unique<std::shared_ptr<ApngFrame>[]>(mFrameCount);
   if (compressFrames) {
     try {
       mCompressedStorage = std::make_shared<std::vector<char>>();
@@ -39,7 +38,7 @@ ApngImage::ApngImage(
 }
 
 std::shared_ptr<ApngFrame> ApngImage::getFrame(const uint32_t index) const {
-  if (index >= mFrameCount) {
+  if (index >= mFrames.size()) {
     return nullptr;
   }
   return mFrames[index];
@@ -48,6 +47,9 @@ std::shared_ptr<ApngFrame> ApngImage::getFrame(const uint32_t index) const {
 void ApngImage::setFrame(const uint32_t index, std::unique_ptr<ApngFrame> frame) {
   if (index >= mFrameCount) {
     return;
+  }
+  if (index >= mFrames.size()) {
+    mFrames.resize(index + 1);
   }
   if (frame && mCompressedStorage) {
     frame->compress(mCompressedStorage, mCompressionScratch);
